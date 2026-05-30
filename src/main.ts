@@ -7,7 +7,7 @@ async function bootstrap() {
   await app.listen(3000);
 
   console.log('Telegram AI Bot started on port 3000');
-  console.log('server is ready for client connections');
+  console.log('Server is ready for client connections');
 }
 
 bootstrap();
