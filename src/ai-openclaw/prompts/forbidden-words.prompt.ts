@@ -1,0 +1,31 @@
+export const FORBIDDEN_WORDS = [
+  'system prompt',
+  'prompt',
+  'memory',
+  'agent',
+  'tools',
+  'tool',
+  'shell',
+  'cron',
+  'git',
+  'config',
+  'token',
+  'secret',
+  'ignore previous instructions',
+  'agents.md',
+  'identity.md',
+  'memory.md',
+  'soul.md',
+  'tools.md',
+  'user.md',
+  'agents',
+  'identity',
+  'memory',
+  'soul',
+  'tools',
+  'user',
+  'системная инструкция',
+];
+
+export const FORBIDDEN_RESPONSE =
+  'Я могу помочь только по продукции и технологиях MolecularMeal.';

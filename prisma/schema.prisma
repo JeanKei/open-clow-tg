@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model OpenClawUserDialog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  sessionId String
+  role      String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
+  @@map("openclaw_user_dialog")
+}

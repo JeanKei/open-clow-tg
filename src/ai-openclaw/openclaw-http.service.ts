@@ -34,17 +34,24 @@ export class OpenClawHttpService
     this.initialized = false;
   }
 
-  async sendMessage(sessionId: string, message: string): Promise<string> {
+  async sendMessage(
+    sessionId: string,
+    message: string,
+    systemPrompt: string,
+  ): Promise<string> {
     try {
       const response = await axios.post(
         `${this.apiUrl}/v1/chat/completions`,
         {
           model: 'openclaw',
-          messages: [{ role: 'user', content: message }],
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message },
+          ],
           user: sessionId,
         },
         {
-          timeout: 600000,
+          timeout: 300000,
           headers: {
             Authorization: `Bearer ${this.token}`,
           },
