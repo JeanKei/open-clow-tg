@@ -13,7 +13,7 @@ export class TelegramUpdate {
     await ctx.reply(
       'Добро пожаловать в AI бота',
       Markup.inlineKeyboard([
-        [Markup.button.callback('🤖 Написать AI Боту', 'START_AI_CHAT')],
+        [Markup.button.callback('Спросить Шефа', 'START_AI_CHAT')],
       ]),
     );
   }
@@ -30,7 +30,7 @@ export class TelegramUpdate {
     this.aiOpenclawService.createAiSession(userId);
 
     await ctx.reply(
-      '👨‍🍳 Задайте свой вопрос повару, и я постараюсь ответить максимально полезно!',
+      '👨‍🍳 Задайте свой вопрос ИИ Шефу, и я постараюсь ответить максимально полезно!',
       Markup.inlineKeyboard([
         [Markup.button.callback('❌ Завершить диалог', 'STOP_AI_CHAT')],
       ]),
@@ -79,7 +79,7 @@ export class TelegramUpdate {
 
     if (!hasSession) {
       await ctx.reply(
-        'AI чат не активен. Нажмите "Написать AI Боту" чтобы начать.',
+        'чат c ИИ Шефом не активен. Нажмите "Спросить Шефа" чтобы начать.',
       );
       return;
     }
@@ -88,12 +88,13 @@ export class TelegramUpdate {
 
     try {
       const response = await this.aiOpenclawService.sendMessage(userId, text!);
-      await ctx.reply(
-        response,
-        Markup.inlineKeyboard([
+      await ctx.reply(response, {
+        parse_mode: 'HTML',
+        link_preview_options: { is_disabled: true },
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('❌ Завершить диалог', 'STOP_AI_CHAT')],
         ]),
-      );
+      });
     } catch {
       await ctx.reply(
         'Ошибка отправки сообщения. Попробуйте /stopai и снова начать чат.',
