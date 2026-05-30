@@ -8,8 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
-export class OpenClawWebSocketService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(OpenClawWebSocketService.name);
+export class OpenClawHttpService
+  implements OnModuleInit,
+    OnModuleDestroy
+{
+  private readonly logger = new Logger(OpenClawHttpService.name);
   private readonly apiUrl: string;
   private readonly token: string;
   private initialized = false;
@@ -60,7 +63,7 @@ export class OpenClawWebSocketService implements OnModuleInit, OnModuleDestroy {
     return sessionId;
   }
 
-  getClient(): OpenClawWebSocketService | null {
+  getClient(): OpenClawHttpService | null {
     return this.initialized ? this : null;
   }
 

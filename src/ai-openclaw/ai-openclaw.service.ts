@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 
 import { SessionStore } from './session.store';
-import { OpenClawWebSocketService } from './openclaw-websocket.service';
+import { OpenClawHttpService } from './openclaw-http.service';
 
 @Injectable()
 export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
@@ -17,7 +17,7 @@ export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly sessionStore: SessionStore,
-    private readonly openClawService: OpenClawWebSocketService,
+    private readonly openClawService: OpenClawHttpService,
   ) {}
 
   onModuleInit() {

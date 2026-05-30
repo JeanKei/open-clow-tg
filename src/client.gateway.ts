@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { OpenClawWebSocketService } from './ai-openclaw/openclaw-websocket.service';
+import { OpenClawHttpService } from './ai-openclaw/openclaw-http.service';
 
 interface ClientInfo {
   userId: number;
@@ -29,7 +29,7 @@ export class ClientGateway
   server!: Server;
 
   constructor(
-    private readonly openClawService: OpenClawWebSocketService,
+    private readonly openClawService: OpenClawHttpService,
   ) {}
 
   handleConnection(client: Socket) {
