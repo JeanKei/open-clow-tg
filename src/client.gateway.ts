@@ -14,7 +14,7 @@ import {
 } from './ai-openclaw/prompts/forbidden-words.prompt';
 
 interface ClientInfo {
-  userId: number;
+  userId: bigint;
 }
 
 @WebSocketGateway({
@@ -44,11 +44,11 @@ export class ClientGateway
 
   @SubscribeMessage('join')
   handleJoin(client: Socket, payload: { userId: number }) {
-    const { userId } = payload;
+    const userId = BigInt(payload.userId);
     this.aiOpenclawService.createAiSession(userId);
     this.clients.set(client.id, { userId });
-    client.join(`user_${userId}`);
-    this.logger.log(`Client ${client.id} joined user_${userId}`);
+    client.join(`user_${payload.userId}`);
+    this.logger.log(`Client ${client.id} joined user_${payload.userId}`);
   }
 
   private checkForbiddenWords(message: string): boolean {

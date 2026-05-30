@@ -33,7 +33,7 @@ export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {}
 
-  createAiSession(userId: number) {
+  createAiSession(userId: bigint) {
     const sessionId = `customer_${userId}_${randomUUID()}`;
     this.sessionStore.createSession(userId, sessionId);
     return sessionId;
@@ -44,61 +44,47 @@ export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
     return FORBIDDEN_WORDS.some((word) => normalized.includes(word));
   }
 
-  async sendMessage(userId: number, message: string): Promise<string> {
+  async sendMessage(userId: bigint, message: string): Promise<string> {
     const session = this.sessionStore.getSession(userId);
     if (!session) {
+      this.logger.error(`No session found for userId=${userId}`);
       throw new Error('AI session not found');
     }
 
+    this.logger.log(`Processing message for userId=${userId}, sessionId=${session.sessionId}`);
+
     if (this.checkForbiddenWords(message)) {
-      await this.dialogService.saveMessage(
-        userId,
-        session.sessionId,
-        'user',
-        message,
-      );
-      await this.dialogService.saveMessage(
-        userId,
-        session.sessionId,
-        'assistant',
-        FORBIDDEN_RESPONSE,
-      );
+      this.logger.warn(`Forbidden words detected for userId=${userId}`);
+      this.dialogService.saveMessage(userId, session.sessionId, 'user', message).catch(() => {});
+      this.dialogService.saveMessage(userId, session.sessionId, 'assistant', FORBIDDEN_RESPONSE).catch(() => {});
       return FORBIDDEN_RESPONSE;
     }
 
-    await this.dialogService.saveMessage(
-      userId,
-      session.sessionId,
-      'user',
-      message,
-    );
+    this.dialogService.saveMessage(userId, session.sessionId, 'user', message).catch(() => {});
 
     try {
+      this.logger.log(`Sending to OpenClaw for userId=${userId}`);
       const response = await this.openClawService.sendMessage(
         session.sessionId,
         message,
         CUSTOMER_SYSTEM_PROMPT,
       );
 
-      await this.dialogService.saveMessage(
-        userId,
-        session.sessionId,
-        'assistant',
-        response,
-      );
+      this.dialogService.saveMessage(userId, session.sessionId, 'assistant', response).catch(() => {});
 
+      this.logger.log(`Response received for userId=${userId}`);
       return response;
     } catch (error) {
-      this.logger.error((error as Error).message);
+      this.logger.error(`OpenClaw error for userId=${userId}: ${(error as Error).message}`);
       return 'Ошибка AI сервиса';
     }
   }
 
-  stopSession(userId: number) {
+  stopSession(userId: bigint) {
     this.sessionStore.removeSession(userId);
   }
 
-  hasSession(userId: number): boolean {
+  hasSession(userId: bigint): boolean {
     return this.sessionStore.hasAiEnabled(userId);
   }
 }

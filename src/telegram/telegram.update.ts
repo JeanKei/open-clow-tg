@@ -1,11 +1,15 @@
 import { Action, Ctx, Hears, Start, Update, On } from 'nestjs-telegraf';
+import { Logger } from '@nestjs/common';
 
 import { Context, Markup } from 'telegraf';
 
 import { AiOpenclawService } from '../ai-openclaw/ai-openclaw.service';
+import { sanitizeHtmlForTelegram } from '../utils/html-sanitizer.util';
 
 @Update()
 export class TelegramUpdate {
+  private readonly logger = new Logger(TelegramUpdate.name);
+
   constructor(private readonly aiOpenclawService: AiOpenclawService) {}
 
   @Start()
@@ -20,14 +24,21 @@ export class TelegramUpdate {
 
   @Action('START_AI_CHAT')
   async startAiChat(@Ctx() ctx: Context) {
-    await ctx.answerCbQuery();
+    try {
+      await ctx.answerCbQuery();
+    } catch {
+      // ignore timeout errors
+    }
 
     const userId = ctx.from?.id;
+    const username = ctx.from?.username || 'unknown';
     if (!userId) {
       return;
     }
 
-    this.aiOpenclawService.createAiSession(userId);
+    this.logger.log(`Starting AI chat for userId=${userId} (@${username})`);
+
+    this.aiOpenclawService.createAiSession(BigInt(userId));
 
     await ctx.reply(
       '👨‍🍳 Задайте свой вопрос ИИ Шефу, и я постараюсь ответить максимально полезно!',
@@ -39,14 +50,18 @@ export class TelegramUpdate {
 
   @Action('STOP_AI_CHAT')
   async stopAiChat(@Ctx() ctx: Context) {
-    await ctx.answerCbQuery();
+    try {
+      await ctx.answerCbQuery();
+    } catch {
+      // ignore timeout errors
+    }
 
     const userId = ctx.from?.id;
     if (!userId) {
       return;
     }
 
-    this.aiOpenclawService.stopSession(userId);
+    this.aiOpenclawService.stopSession(BigInt(userId));
 
     await ctx.reply('👨‍🍳 Рад был помочь! Обращайтесь ещё 😊');
   }
@@ -58,7 +73,7 @@ export class TelegramUpdate {
       return;
     }
 
-    this.aiOpenclawService.stopSession(userId);
+    this.aiOpenclawService.stopSession(BigInt(userId));
 
     await ctx.reply('👨‍🍳 Рад был помочь! Обращайтесь ещё 😊');
   }
@@ -66,16 +81,21 @@ export class TelegramUpdate {
   @On('text')
   async onMessage(@Ctx() ctx: Context) {
     const userId = ctx.from?.id;
+    const username = ctx.from?.username || 'unknown';
     const text =
       'text' in (ctx.message || {})
         ? (ctx.message as { text: string }).text
         : undefined;
 
+    this.logger.log(`Message from userId=${userId} (@${username}): ${text}`);
+
     if (!userId || text === '/start' || text === '/stopai') {
       return;
     }
 
-    const hasSession = this.aiOpenclawService.hasSession(userId);
+    const hasSession = this.aiOpenclawService.hasSession(BigInt(userId));
+
+    this.logger.log(`hasSession for userId=${userId}: ${hasSession}`);
 
     if (!hasSession) {
       await ctx.reply(
@@ -91,16 +111,19 @@ export class TelegramUpdate {
     }, 4000);
 
     try {
-      const response = await this.aiOpenclawService.sendMessage(userId, text!);
+      this.logger.log(`Sending message to AI for userId=${userId}`);
+      const response = await this.aiOpenclawService.sendMessage(BigInt(userId), text!);
+      this.logger.log(`Got response for userId=${userId}: ${response.substring(0, 50)}...`);
       clearInterval(typingInterval);
-      await ctx.reply(response, {
+      await ctx.reply(sanitizeHtmlForTelegram(response), {
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
         ...Markup.inlineKeyboard([
           [Markup.button.callback('❌ Завершить диалог', 'STOP_AI_CHAT')],
         ]),
       });
-    } catch {
+    } catch (error) {
+      this.logger.error(`Error for userId=${userId}: ${(error as Error).message}`);
       clearInterval(typingInterval);
       await ctx.reply(
         'Ошибка отправки сообщения. Попробуйте /stopai и снова начать чат.',

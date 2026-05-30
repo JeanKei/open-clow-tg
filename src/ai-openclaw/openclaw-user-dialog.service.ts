@@ -6,7 +6,7 @@ export class OpenClawUserDialogService {
   constructor(private readonly prisma: PrismaService) {}
 
   async saveMessage(
-    userId: number,
+    userId: bigint,
     sessionId: string,
     role: 'user' | 'assistant',
     message: string,
@@ -29,7 +29,7 @@ export class OpenClawUserDialogService {
     });
   }
 
-  async getUserDialogs(userId: number, limit = 100) {
+  async getUserDialogs(userId: bigint, limit = 100) {
     return this.prisma.openClawUserDialog.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

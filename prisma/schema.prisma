@@ -9,7 +9,7 @@ datasource db {
 
 model OpenClawUserDialog {
   id        Int      @id @default(autoincrement())
-  userId    Int
+  userId    BigInt
   sessionId String
   role      String
   message   String
