@@ -30,8 +30,25 @@ export class TelegramUpdate {
     this.aiOpenclawService.createAiSession(userId);
 
     await ctx.reply(
-      'AI чат активирован. Напишите сообщение.\nОтправьте /stopai чтобы остановить.',
+      '👨‍🍳 Задайте свой вопрос повару, и я постараюсь ответить максимально полезно!',
+      Markup.inlineKeyboard([
+        [Markup.button.callback('❌ Завершить диалог', 'STOP_AI_CHAT')],
+      ]),
     );
+  }
+
+  @Action('STOP_AI_CHAT')
+  async stopAiChat(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery();
+
+    const userId = ctx.from?.id;
+    if (!userId) {
+      return;
+    }
+
+    this.aiOpenclawService.stopSession(userId);
+
+    await ctx.reply('👨‍🍳 Рад был помочь! Обращайтесь ещё 😊');
   }
 
   @Hears('/stopai')
@@ -43,7 +60,7 @@ export class TelegramUpdate {
 
     this.aiOpenclawService.stopSession(userId);
 
-    await ctx.reply('AI чат остановлен');
+    await ctx.reply('👨‍🍳 Рад был помочь! Обращайтесь ещё 😊');
   }
 
   @On('text')
@@ -71,7 +88,12 @@ export class TelegramUpdate {
 
     try {
       const response = await this.aiOpenclawService.sendMessage(userId, text!);
-      await ctx.reply(response);
+      await ctx.reply(
+        response,
+        Markup.inlineKeyboard([
+          [Markup.button.callback('❌ Завершить диалог', 'STOP_AI_CHAT')],
+        ]),
+      );
     } catch {
       await ctx.reply(
         'Ошибка отправки сообщения. Попробуйте /stopai и снова начать чат.',
