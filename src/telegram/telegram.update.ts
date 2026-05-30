@@ -80,6 +80,7 @@ export class TelegramUpdate {
 
   @On('text')
   async onMessage(@Ctx() ctx: Context) {
+    const rawTimestamp = Date.now();
     const userId = ctx.from?.id;
     const username = ctx.from?.username || 'unknown';
     const text =
@@ -87,7 +88,7 @@ export class TelegramUpdate {
         ? (ctx.message as { text: string }).text
         : undefined;
 
-    this.logger.log(`Message from userId=${userId} (@${username}): ${text}`);
+    this.logger.log(`RAW UPDATE userId=${userId} (@${username}) ts=${rawTimestamp}`);
 
     if (!userId || text === '/start' || text === '/stopai') {
       return;
@@ -104,15 +105,22 @@ export class TelegramUpdate {
       return;
     }
 
+    this.logger.log(`BEFORE AI userId=${userId}`);
+
     await ctx.sendChatAction('typing');
 
+    // Process in background - don't await!
+    this.processMessageAsync(ctx, BigInt(userId), text!);
+  }
+
+  private async processMessageAsync(ctx: Context, userId: bigint, text: string) {
     let typingInterval = setInterval(() => {
       ctx.sendChatAction('typing').catch(() => {});
     }, 4000);
 
     try {
       this.logger.log(`Sending message to AI for userId=${userId}`);
-      const response = await this.aiOpenclawService.sendMessage(BigInt(userId), text!);
+      const response = await this.aiOpenclawService.sendMessage(userId, text);
       this.logger.log(`Got response for userId=${userId}: ${response.substring(0, 50)}...`);
       clearInterval(typingInterval);
       await ctx.reply(sanitizeHtmlForTelegram(response), {

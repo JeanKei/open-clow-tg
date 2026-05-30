@@ -51,19 +51,19 @@ export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
       throw new Error('AI session not found');
     }
 
-    this.logger.log(`Processing message for userId=${userId}, sessionId=${session.sessionId}`);
+    this.logger.log(`USER ${userId} SEND - sessionId=${session.sessionId}`);
 
     if (this.checkForbiddenWords(message)) {
       this.logger.warn(`Forbidden words detected for userId=${userId}`);
       this.dialogService.saveMessage(userId, session.sessionId, 'user', message).catch(() => {});
       this.dialogService.saveMessage(userId, session.sessionId, 'assistant', FORBIDDEN_RESPONSE).catch(() => {});
+      this.logger.log(`USER ${userId} RESPONSE (forbidden)`);
       return FORBIDDEN_RESPONSE;
     }
 
     this.dialogService.saveMessage(userId, session.sessionId, 'user', message).catch(() => {});
 
     try {
-      this.logger.log(`Sending to OpenClaw for userId=${userId}`);
       const response = await this.openClawService.sendMessage(
         session.sessionId,
         message,
@@ -72,10 +72,10 @@ export class AiOpenclawService implements OnModuleInit, OnModuleDestroy {
 
       this.dialogService.saveMessage(userId, session.sessionId, 'assistant', response).catch(() => {});
 
-      this.logger.log(`Response received for userId=${userId}`);
+      this.logger.log(`USER ${userId} RESPONSE`);
       return response;
     } catch (error) {
-      this.logger.error(`OpenClaw error for userId=${userId}: ${(error as Error).message}`);
+      this.logger.error(`USER ${userId} ERROR: ${(error as Error).message}`);
       return 'Ошибка AI сервиса';
     }
   }

@@ -15,9 +15,23 @@ import { ClientGateway } from './client.gateway';
     TelegrafModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        token: config.get<string>('BOT_TOKEN')!,
-      }),
+      useFactory: (config: ConfigService) => {
+        const webhookUrl = config.get<string>('WEBHOOK_URL');
+        
+        if (webhookUrl) {
+          return {
+            token: config.get<string>('BOT_TOKEN')!,
+            webhook: {
+              url: webhookUrl,
+              port: parseInt(config.get<string>('PORT', '3000')),
+            },
+          };
+        }
+
+        return {
+          token: config.get<string>('BOT_TOKEN')!,
+        };
+      },
     }),
 
     TelegramModule,
