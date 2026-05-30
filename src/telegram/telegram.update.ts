@@ -86,8 +86,13 @@ export class TelegramUpdate {
 
     await ctx.sendChatAction('typing');
 
+    let typingInterval = setInterval(() => {
+      ctx.sendChatAction('typing').catch(() => {});
+    }, 4000);
+
     try {
       const response = await this.aiOpenclawService.sendMessage(userId, text!);
+      clearInterval(typingInterval);
       await ctx.reply(response, {
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
@@ -96,6 +101,7 @@ export class TelegramUpdate {
         ]),
       });
     } catch {
+      clearInterval(typingInterval);
       await ctx.reply(
         'Ошибка отправки сообщения. Попробуйте /stopai и снова начать чат.',
       );

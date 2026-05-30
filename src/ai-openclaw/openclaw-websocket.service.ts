@@ -8,10 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
-export class OpenClawWebSocketService
-  implements OnModuleInit,
-    OnModuleDestroy
-{
+export class OpenClawWebSocketService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OpenClawWebSocketService.name);
   private readonly apiUrl: string;
   private readonly token: string;
@@ -40,27 +37,20 @@ export class OpenClawWebSocketService
         `${this.apiUrl}/v1/chat/completions`,
         {
           model: 'openclaw',
-          messages: [
-            { role: 'user', content: message },
-          ],
+          messages: [{ role: 'user', content: message }],
           user: sessionId,
         },
         {
-          timeout: 60000,
+          timeout: 600000,
           headers: {
             Authorization: `Bearer ${this.token}`,
           },
         },
       );
 
-      return (
-        response.data.choices?.[0]?.message?.content ||
-        'Нет ответа от AI'
-      );
+      return response.data.choices?.[0]?.message?.content || 'Нет ответа от AI';
     } catch (error) {
-      this.logger.error(
-        `Failed to send message: ${(error as Error).message}`,
-      );
+      this.logger.error(`Failed to send message: ${(error as Error).message}`);
       throw error;
     }
   }
